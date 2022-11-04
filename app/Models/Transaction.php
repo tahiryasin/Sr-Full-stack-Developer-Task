@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\TransactionStatusUpdated;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -24,6 +25,17 @@ class Transaction extends Model
 
             $transaction->transaction_no = $transaction_no;
         });
+
+        static::created(function ($transaction){
+            $transaction->order->customer->notify(new TransactionStatusUpdated($transaction));
+        });
+        Transaction::updated(function($transaction)
+        {
+            if ($transaction->status != $transaction->getRawOriginal('status')) {
+                $transaction->order->customer->notify(new TransactionStatusUpdated($transaction));
+            }
+        });
+
     }
 
     public function order(){
