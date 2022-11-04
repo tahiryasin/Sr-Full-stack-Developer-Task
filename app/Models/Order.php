@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Notifications\OrderPlaced;
 
 class Order extends Model
 {
@@ -38,7 +39,9 @@ class Order extends Model
             $order->products()->delete();
             $order->grand_total = self::addOrderDetails($order);
 
-            $order->saveQuietly();            
+            $order->saveQuietly(); // Save without firing events
+			// Send notification email
+			$order->customer->notify(new OrderPlaced($order));			
         });
         static::updated(function ($order){
             $order->products()->delete();
